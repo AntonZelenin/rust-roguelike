@@ -27,12 +27,28 @@ fn try_move(delta_x: i32, delta_y: i32, ecs: &mut World) {
 
 pub fn read_input(gs: &mut State, ctx: &mut Rltk) {
     match ctx.key {
-        None => {}
+        None => {} // Nothing happened
         Some(key) => match key {
-            VirtualKeyCode::Left => try_move(-1, 0, &mut gs.ecs),
-            VirtualKeyCode::Right => try_move(1, 0, &mut gs.ecs),
-            VirtualKeyCode::Up => try_move(0, -1, &mut gs.ecs),
-            VirtualKeyCode::Down => try_move(0, 1, &mut gs.ecs),
+            VirtualKeyCode::Left |
+            VirtualKeyCode::A |
+            VirtualKeyCode::Numpad4 |
+            VirtualKeyCode::H => try_move(-1, 0, &mut gs.ecs),
+
+            VirtualKeyCode::Right |
+            VirtualKeyCode::D |
+            VirtualKeyCode::Numpad6 |
+            VirtualKeyCode::L => try_move(1, 0, &mut gs.ecs),
+
+            VirtualKeyCode::Up |
+            VirtualKeyCode::W |
+            VirtualKeyCode::Numpad8 |
+            VirtualKeyCode::K => try_move(0, -1, &mut gs.ecs),
+
+            VirtualKeyCode::Down |
+            VirtualKeyCode::S |
+            VirtualKeyCode::Numpad2 |
+            VirtualKeyCode::J => try_move(0, 1, &mut gs.ecs),
+
             _ => {}
         },
     }
