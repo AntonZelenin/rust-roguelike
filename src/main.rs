@@ -3,12 +3,13 @@ mod player;
 mod components;
 mod state;
 mod rect;
+mod visibility_system;
 
 use crate::state::State;
 use crate::player::Player;
 use rltk::RGB;
 use specs::prelude::*;
-use crate::components::{Position, Renderable};
+use crate::components::{Position, Renderable, Viewshed};
 
 // todo maybe resources directory is not needed
 fn main() -> rltk::BError {
@@ -23,9 +24,10 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
 
-    let (rooms, map) = map::new_map_rooms_and_corridors();
-    let (player_x, player_y) = rooms[0].center();
+    let map = map::Map::new_with_rooms_and_corridors();
+    let (player_x, player_y) = map.rooms[0].center();
 
     gs.ecs
         .create_entity()
@@ -36,6 +38,7 @@ fn main() -> rltk::BError {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player {})
+        .with(Viewshed{ visible_tiles : Vec::new(), range : 8 })
         .build();
     gs.ecs.insert(map);
 
