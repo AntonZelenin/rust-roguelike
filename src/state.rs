@@ -3,15 +3,20 @@ use crate::visibility_system::VisibilitySystem;
 
 use rltk::{GameState, Rltk};
 use specs::prelude::*;
+use crate::map::Map;
+use crate::monster_ai_system::MonsterAI;
 
 pub struct State {
     pub ecs: World,
+    pub run_state : RunState,
 }
 
 impl State {
     fn run_systems(&mut self) {
-        let mut vis = VisibilitySystem{};
+        let mut vis = VisibilitySystem {};
         vis.run_now(&self.ecs);
+        let mut mob = MonsterAI {};
+        mob.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -20,16 +25,30 @@ impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
-        player::read_input(self, ctx);
-        self.run_systems();
+        if self.run_state == RunState::Running {
+            self.run_systems();
+            self.run_state = RunState::Paused;
+        } else {
+            self.run_state = player::read_input(self, ctx);
+        }
 
         map::draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<components::Position>();
         let renderables = self.ecs.read_storage::<components::Renderable>();
+        let map = self.ecs.fetch::<Map>();
 
         for (pos, render) in (&positions, &renderables).join() {
-            ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+            let idx = map.xy_idx(pos.x, pos.y);
+            if map.visible_tiles[idx] {
+                ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
+            }
         }
     }
+}
+
+#[derive(PartialEq, Copy, Clone)]
+pub enum RunState {
+    Paused,
+    Running,
 }

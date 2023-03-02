@@ -1,7 +1,7 @@
 use crate::components::{Position, Viewshed};
-use crate::state::State;
+use crate::state::{RunState, State};
 
-use rltk::{Rltk, VirtualKeyCode};
+use rltk::{Point, Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use specs_derive::Component;
 use std::cmp::{max, min};
@@ -20,6 +20,10 @@ fn try_move(delta_x: i32, delta_y: i32, ecs: &mut World) {
     for (_player, pos, viewshed) in (&mut players, &mut positions, &mut viewsheds).join() {
         let destination_idx = map.xy_idx(pos.x + delta_x, pos.y + delta_y);
 
+        let mut ppos = ecs.write_resource::<Point>();
+        ppos.x = pos.x;
+        ppos.y = pos.y;
+
         if map.tiles[destination_idx] != map::TileType::Wall {
             pos.x = min(79, max(0, pos.x + delta_x));
             pos.y = min(49, max(0, pos.y + delta_y));
@@ -29,9 +33,9 @@ fn try_move(delta_x: i32, delta_y: i32, ecs: &mut World) {
     }
 }
 
-pub fn read_input(gs: &mut State, ctx: &mut Rltk) {
+pub fn read_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     match ctx.key {
-        None => {} // Nothing happened
+        None => { return RunState::Paused; }
         Some(key) => match key {
             VirtualKeyCode::Left |
             VirtualKeyCode::A |
@@ -53,7 +57,8 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) {
             VirtualKeyCode::Numpad2 |
             VirtualKeyCode::J => try_move(0, 1, &mut gs.ecs),
 
-            _ => {}
+            _ => { return RunState::Paused; }
         },
     }
+    RunState::Running
 }

@@ -2,8 +2,6 @@ use std::cmp::{max, min};
 use rltk::{Algorithm2D, BaseMap, Point, RandomNumberGenerator, RGB, Rltk};
 use specs::prelude::*;
 use specs::World;
-use crate::components::Viewshed;
-use crate::player::Player;
 use crate::rect::Rect;
 
 const MAP_WIDTH: i32 = 80;
@@ -26,7 +24,7 @@ pub struct Map {
 
 impl Map {
     pub fn xy_idx(&self, x: i32, y: i32) -> usize {
-        (y * MAP_WIDTH + x) as usize
+        (y * self.width + x) as usize
     }
 
     pub fn new_with_rooms_and_corridors() -> Map {
