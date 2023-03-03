@@ -24,7 +24,7 @@ fn try_move(delta_x: i32, delta_y: i32, ecs: &mut World) {
         ppos.x = pos.x;
         ppos.y = pos.y;
 
-        if map.tiles[destination_idx] != map::TileType::Wall {
+        if !map.blocked[destination_idx] {
             pos.x = min(79, max(0, pos.x + delta_x));
             pos.y = min(49, max(0, pos.y + delta_y));
 
@@ -39,23 +39,32 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
         Some(key) => match key {
             VirtualKeyCode::Left |
             VirtualKeyCode::A |
-            VirtualKeyCode::Numpad4 |
-            VirtualKeyCode::H => try_move(-1, 0, &mut gs.ecs),
+            VirtualKeyCode::Numpad4 => try_move(-1, 0, &mut gs.ecs),
 
             VirtualKeyCode::Right |
             VirtualKeyCode::D |
-            VirtualKeyCode::Numpad6 |
-            VirtualKeyCode::L => try_move(1, 0, &mut gs.ecs),
+            VirtualKeyCode::Numpad6 => try_move(1, 0, &mut gs.ecs),
 
             VirtualKeyCode::Up |
             VirtualKeyCode::W |
-            VirtualKeyCode::Numpad8 |
-            VirtualKeyCode::K => try_move(0, -1, &mut gs.ecs),
+            VirtualKeyCode::Numpad8 => try_move(0, -1, &mut gs.ecs),
 
             VirtualKeyCode::Down |
             VirtualKeyCode::S |
-            VirtualKeyCode::Numpad2 |
-            VirtualKeyCode::J => try_move(0, 1, &mut gs.ecs),
+            VirtualKeyCode::Numpad2 => try_move(0, 1, &mut gs.ecs),
+
+            // Diagonals
+            VirtualKeyCode::Numpad9 |
+            VirtualKeyCode::I => try_move(1, -1, &mut gs.ecs),
+
+            VirtualKeyCode::Numpad7 |
+            VirtualKeyCode::U => try_move(-1, -1, &mut gs.ecs),
+
+            VirtualKeyCode::Numpad3 |
+            VirtualKeyCode::K => try_move(1, 1, &mut gs.ecs),
+
+            VirtualKeyCode::Numpad1 |
+            VirtualKeyCode::J => try_move(-1, 1, &mut gs.ecs),
 
             _ => { return RunState::Paused; }
         },

@@ -4,19 +4,25 @@ use crate::visibility_system::VisibilitySystem;
 use rltk::{GameState, Rltk};
 use specs::prelude::*;
 use crate::map::Map;
+use crate::map_indexing_system::MapIndexingSystem;
 use crate::monster_ai_system::MonsterAI;
 
 pub struct State {
     pub ecs: World,
-    pub run_state : RunState,
+    pub run_state: RunState,
 }
 
 impl State {
     fn run_systems(&mut self) {
         let mut vis = VisibilitySystem {};
         vis.run_now(&self.ecs);
+
         let mut mob = MonsterAI {};
         mob.run_now(&self.ecs);
+
+        let mut map_index = MapIndexingSystem {};
+        map_index.run_now(&self.ecs);
+
         self.ecs.maintain();
     }
 }

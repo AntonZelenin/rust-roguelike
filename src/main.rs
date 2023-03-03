@@ -1,5 +1,6 @@
 mod components;
 mod map;
+mod map_indexing_system;
 mod monster;
 mod monster_ai_system;
 mod player;
@@ -11,7 +12,7 @@ use crate::state::{RunState, State};
 use crate::player::Player;
 use rltk::{BaseMap, Point, RGB};
 use specs::prelude::*;
-use crate::components::{Name, Position, Renderable, Viewshed};
+use crate::components::{BlocksTile, CombatStats, Name, Position, Renderable, Viewshed};
 use crate::monster::Monster;
 
 fn main() -> rltk::BError {
@@ -24,6 +25,8 @@ fn main() -> rltk::BError {
         ecs: World::new(),
         run_state : RunState::Running,
     };
+    gs.ecs.register::<BlocksTile>();
+    gs.ecs.register::<CombatStats>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<Player>();
@@ -53,6 +56,7 @@ fn create_player(gs: &mut State, map: &map::Map) {
         })
         .with(Viewshed { visible_tiles: Vec::new(), range: 8, dirty: true })
         .with(Name{name: "Player".to_string() })
+        .with(CombatStats{ max_hp: 30, hp: 30, defense: 2, power: 5 })
         .build();
     gs.ecs.insert(Point::new(player_x, player_y));
 }
@@ -82,6 +86,8 @@ fn create_monsters(gs: &mut State, map: &map::Map) {
             })
             .with(Viewshed{ visible_tiles : Vec::new(), range: 8, dirty: true })
             .with(Name{ name: format!("{} #{}", &name, i) })
+            .with(BlocksTile{})
+            .with(CombatStats{ max_hp: 16, hp: 16, defense: 1, power: 4 })
             .build();
     }
 }
