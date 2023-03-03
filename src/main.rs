@@ -1,5 +1,7 @@
 mod components;
 mod damage_system;
+mod game_log;
+mod gui;
 mod map;
 mod map_indexing_system;
 mod melee_combat_system;
@@ -19,9 +21,10 @@ use crate::monster::Monster;
 
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
-    let context = RltkBuilder::simple80x50()
+    let mut context = RltkBuilder::simple80x50()
         .with_title("Roguelike Tutorial")
         .build()?;
+    context.with_post_scanlines(true);
 
     let mut gs = State {
         ecs: World::new(),
@@ -44,6 +47,7 @@ fn main() -> rltk::BError {
     gs.ecs.insert(map);
     gs.ecs.insert(player);
     gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(game_log::GameLog { entries: vec!["Welcome to Rusty Roguelike".to_string()] });
 
     rltk::main_loop(context, gs)
 }
@@ -60,8 +64,8 @@ fn create_player(gs: &mut State, map: &map::Map) -> Entity {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Viewshed { visible_tiles: Vec::new(), range: 8, dirty: true })
-        .with(Name{name: "Player".to_string() })
-        .with(CombatStats{ max_hp: 30, hp: 30, defense: 2, power: 5 })
+        .with(Name { name: "Player".to_string() })
+        .with(CombatStats { max_hp: 30, hp: 30, defense: 2, power: 5 })
         .build();
     gs.ecs.insert(Point::new(player_x, player_y));
     return player_entity;
@@ -71,14 +75,20 @@ fn create_monsters(gs: &mut State, map: &map::Map) {
     let mut rng = rltk::RandomNumberGenerator::new();
 
     for (i, room) in map.rooms.iter().skip(1).enumerate() {
-        let (x,y) = room.center();
+        let (x, y) = room.center();
 
-        let glyph : rltk::FontCharType;
-        let name : String;
+        let glyph: rltk::FontCharType;
+        let name: String;
         let roll = rng.roll_dice(1, 2);
         match roll {
-            1 => { glyph = rltk::to_cp437('g'); name = "Goblin".to_string(); }
-            _ => { glyph = rltk::to_cp437('o'); name = "Orc".to_string(); }
+            1 => {
+                glyph = rltk::to_cp437('g');
+                name = "Goblin".to_string();
+            }
+            _ => {
+                glyph = rltk::to_cp437('o');
+                name = "Orc".to_string();
+            }
         }
 
         gs.ecs
@@ -90,10 +100,10 @@ fn create_monsters(gs: &mut State, map: &map::Map) {
                 fg: RGB::named(rltk::RED),
                 bg: RGB::named(rltk::BLACK),
             })
-            .with(Viewshed{ visible_tiles : Vec::new(), range: 8, dirty: true })
-            .with(Name{ name: format!("{} #{}", &name, i) })
-            .with(BlocksTile{})
-            .with(CombatStats{ max_hp: 16, hp: 16, defense: 1, power: 4 })
+            .with(Viewshed { visible_tiles: Vec::new(), range: 8, dirty: true })
+            .with(Name { name: format!("{} #{}", &name, i) })
+            .with(BlocksTile {})
+            .with(CombatStats { max_hp: 16, hp: 16, defense: 1, power: 4 })
             .build();
     }
 }

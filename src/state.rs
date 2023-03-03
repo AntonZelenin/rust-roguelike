@@ -1,4 +1,4 @@
-use crate::{damage_system, map, player};
+use crate::{damage_system, gui, map, player};
 use crate::visibility_system::VisibilitySystem;
 use crate::components::{Position, Renderable};
 use crate::damage_system::DamageSystem;
@@ -77,6 +77,8 @@ impl GameState for State {
             let idx = map.xy_idx(pos.x, pos.y);
             if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph) }
         }
+
+        gui::draw_ui(&self.ecs, ctx);
     }
 }
 

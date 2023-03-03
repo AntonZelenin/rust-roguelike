@@ -4,8 +4,9 @@ use specs::prelude::*;
 use specs::World;
 use crate::rect::Rect;
 
-const MAP_WIDTH: i32 = 80;
-const MAP_HEIGHT: i32 = 50;
+const MAP_WIDTH: usize = 80;
+const MAP_HEIGHT: usize = 43;
+const MAP_CELL_COUNT: usize = MAP_HEIGHT * MAP_WIDTH;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum TileType {
@@ -31,14 +32,14 @@ impl Map {
 
     pub fn new_with_rooms_and_corridors() -> Map {
         let mut map = Map {
-            tiles: vec![TileType::Wall; 80 * 50],
+            tiles: vec![TileType::Wall; MAP_CELL_COUNT],
             rooms: Vec::new(),
-            width: MAP_WIDTH,
-            height: MAP_HEIGHT,
-            revealed_tiles: vec![false; (MAP_WIDTH * MAP_HEIGHT) as usize],
-            visible_tiles: vec![false; (MAP_WIDTH * MAP_HEIGHT) as usize],
-            blocked: vec![false; (MAP_WIDTH * MAP_HEIGHT) as usize],
-            tile_content: vec![Vec::new(); (MAP_WIDTH * MAP_HEIGHT) as usize],
+            width: MAP_WIDTH as i32,
+            height: MAP_HEIGHT as i32,
+            revealed_tiles: vec![false; MAP_CELL_COUNT],
+            visible_tiles: vec![false; MAP_CELL_COUNT],
+            blocked: vec![false; MAP_CELL_COUNT],
+            tile_content: vec![Vec::new(); MAP_CELL_COUNT],
         };
 
         const MAX_ROOMS: i32 = 30;
