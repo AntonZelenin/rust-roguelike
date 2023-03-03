@@ -1,7 +1,7 @@
 use rltk::console;
 use specs::prelude::*;
+use crate::components::{CombatStats, SufferDamage};
 use crate::player::Player;
-use super::{CombatStats, SufferDamage};
 
 pub struct DamageSystem {}
 
@@ -25,7 +25,6 @@ impl<'a> System<'a> for DamageSystem {
 
 pub fn delete_the_dead(ecs: &mut World) {
     let mut dead: Vec<Entity> = Vec::new();
-    // Using a scope to make the borrow checker happy
     {
         let combat_stats = ecs.read_storage::<CombatStats>();
         let players = ecs.read_storage::<Player>();

@@ -12,7 +12,7 @@ mod visibility_system;
 
 use crate::state::{RunState, State};
 use crate::player::Player;
-use rltk::{BaseMap, Point, RGB};
+use rltk::{Point, RGB};
 use specs::prelude::*;
 use crate::components::{BlocksTile, CombatStats, Name, Position, Renderable, SufferDamage, Viewshed, WantsToMelee};
 use crate::monster::Monster;
