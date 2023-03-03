@@ -1,10 +1,12 @@
-use crate::{components, map, player};
+use crate::{components, damage_system, map, player};
 use crate::visibility_system::VisibilitySystem;
 
 use rltk::{GameState, Rltk};
 use specs::prelude::*;
+use crate::damage_system::DamageSystem;
 use crate::map::Map;
 use crate::map_indexing_system::MapIndexingSystem;
+use crate::melee_combat_system::MeleeCombatSystem;
 use crate::monster_ai_system::MonsterAI;
 
 pub struct State {
@@ -22,6 +24,13 @@ impl State {
 
         let mut map_index = MapIndexingSystem {};
         map_index.run_now(&self.ecs);
+
+        let mut melee = MeleeCombatSystem {};
+        melee.run_now(&self.ecs);
+
+        let mut damage = DamageSystem {};
+        damage.run_now(&self.ecs);
+        damage_system::delete_the_dead(&mut self.ecs);
 
         self.ecs.maintain();
     }

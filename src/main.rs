@@ -1,6 +1,8 @@
 mod components;
+mod damage_system;
 mod map;
 mod map_indexing_system;
+mod melee_combat_system;
 mod monster;
 mod monster_ai_system;
 mod player;
@@ -12,7 +14,7 @@ use crate::state::{RunState, State};
 use crate::player::Player;
 use rltk::{BaseMap, Point, RGB};
 use specs::prelude::*;
-use crate::components::{BlocksTile, CombatStats, Name, Position, Renderable, Viewshed};
+use crate::components::{BlocksTile, CombatStats, Name, Position, Renderable, SufferDamage, Viewshed, WantsToMelee};
 use crate::monster::Monster;
 
 fn main() -> rltk::BError {
@@ -32,7 +34,9 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Player>();
     gs.ecs.register::<Position>();
     gs.ecs.register::<Renderable>();
+    gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<WantsToMelee>();
 
     let map = map::Map::new_with_rooms_and_corridors();
 
