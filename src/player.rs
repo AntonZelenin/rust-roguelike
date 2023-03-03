@@ -27,7 +27,7 @@ fn try_move(delta_x: i32, delta_y: i32, ecs: &mut World) {
             let target = combat_stats.get(*potential_target);
             match target {
                 None => {}
-                Some(t) => {
+                Some(_) => {
                     wants_to_melee.insert(entity, WantsToMelee{ target: *potential_target }).expect("Add target failed");
                     return;
                 }
@@ -49,7 +49,7 @@ fn try_move(delta_x: i32, delta_y: i32, ecs: &mut World) {
 
 pub fn read_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
     match ctx.key {
-        None => { return RunState::Paused; }
+        None => { return RunState::AwaitingInput; }
         Some(key) => match key {
             VirtualKeyCode::Left |
             VirtualKeyCode::A |
@@ -80,8 +80,8 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Numpad1 |
             VirtualKeyCode::J => try_move(-1, 1, &mut gs.ecs),
 
-            _ => { return RunState::Paused; }
+            _ => { return RunState::AwaitingInput; }
         },
     }
-    RunState::Running
+    RunState::PlayerTurn
 }

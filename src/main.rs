@@ -25,7 +25,6 @@ fn main() -> rltk::BError {
 
     let mut gs = State {
         ecs: World::new(),
-        run_state : RunState::Running,
     };
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
@@ -40,16 +39,18 @@ fn main() -> rltk::BError {
 
     let map = map::Map::new_with_rooms_and_corridors();
 
-    create_player(&mut gs, &map);
+    let player = create_player(&mut gs, &map);
     create_monsters(&mut gs, &map);
     gs.ecs.insert(map);
+    gs.ecs.insert(player);
+    gs.ecs.insert(RunState::PreRun);
 
     rltk::main_loop(context, gs)
 }
 
-fn create_player(gs: &mut State, map: &map::Map) {
+fn create_player(gs: &mut State, map: &map::Map) -> Entity {
     let (player_x, player_y) = map.rooms[0].center();
-    gs.ecs
+    let player_entity = gs.ecs
         .create_entity()
         .with(Player {})
         .with(Position { x: player_x, y: player_y })
@@ -63,6 +64,7 @@ fn create_player(gs: &mut State, map: &map::Map) {
         .with(CombatStats{ max_hp: 30, hp: 30, defense: 2, power: 5 })
         .build();
     gs.ecs.insert(Point::new(player_x, player_y));
+    return player_entity;
 }
 
 fn create_monsters(gs: &mut State, map: &map::Map) {
