@@ -1,11 +1,11 @@
-use crate::components::{CombatStats, Position, Viewshed, WantsToMelee};
+use crate::components::{CombatStats, Item, Position, Viewshed, WantsToMelee, WantsToPickupItem};
+use crate::game_log::GameLog;
 use crate::map::Map;
 use crate::state::{RunState, State};
 
 use rltk::{Point, Rltk, VirtualKeyCode};
 use specs::prelude::*;
 use specs_derive::Component;
-use std::cmp::{max, min};
 
 #[derive(Component, Debug)]
 pub struct Player {}
@@ -27,7 +27,7 @@ fn try_move(delta_x: i32, delta_y: i32, ecs: &mut World) {
             match target {
                 None => {}
                 Some(_) => {
-                    wants_to_melee.insert(entity, WantsToMelee{ target: *potential_target }).expect("Add target failed");
+                    wants_to_melee.insert(entity, WantsToMelee { target: *potential_target }).expect("Add target failed");
                     return;
                 }
             }
@@ -38,8 +38,8 @@ fn try_move(delta_x: i32, delta_y: i32, ecs: &mut World) {
         ppos.y = pos.y;
 
         if !map.blocked[destination_idx] {
-            pos.x = min(79, max(0, pos.x + delta_x));
-            pos.y = min(49, max(0, pos.y + delta_y));
+            pos.x = (pos.x + delta_x).clamp(0, 79);
+            pos.y = (pos.y + delta_y).clamp(0, 49);
 
             viewshed.dirty = true;
         }
@@ -79,8 +79,36 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
             VirtualKeyCode::Numpad1 |
             VirtualKeyCode::J => try_move(-1, 1, &mut gs.ecs),
 
+            VirtualKeyCode::G => get_item(&mut gs.ecs),
+
             _ => { return RunState::AwaitingInput; }
         },
     }
     RunState::PlayerTurn
+}
+
+fn get_item(ecs: &mut World) {
+    let player_pos = ecs.fetch::<Point>();
+    let player_entity = ecs.fetch::<Entity>();
+    let entities = ecs.entities();
+    let items = ecs.read_storage::<Item>();
+    let positions = ecs.read_storage::<Position>();
+    let mut game_log = ecs.fetch_mut::<GameLog>();
+
+    let mut target_item: Option<Entity> = None;
+    for (item_entity, _item, position) in (&entities, &items, &positions).join() {
+        if position.x == player_pos.x && position.y == player_pos.y {
+            target_item = Some(item_entity);
+        }
+    }
+
+    match target_item {
+        None => game_log.entries.push("There is nothing here to pick up.".to_string()),
+        Some(item) => {
+            let mut pickup = ecs.write_storage::<WantsToPickupItem>();
+            pickup
+                .insert(*player_entity, WantsToPickupItem { collected_by: *player_entity, item })
+                .expect("Unable to insert want to pickup");
+        }
+    }
 }

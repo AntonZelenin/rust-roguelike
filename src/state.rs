@@ -1,11 +1,12 @@
-use crate::{damage_system, gui, map, player};
-use crate::visibility_system::VisibilitySystem;
+use crate::{gui, map, player, systems};
 use crate::components::{Position, Renderable};
-use crate::damage_system::DamageSystem;
 use crate::map::Map;
-use crate::map_indexing_system::MapIndexingSystem;
-use crate::melee_combat_system::MeleeCombatSystem;
-use crate::monster_ai_system::MonsterAI;
+use crate::systems::damage::DamageSystem;
+use crate::systems::inventory::ItemCollectionSystem;
+use crate::systems::map_indexing::MapIndexingSystem;
+use crate::systems::melee_combat::MeleeCombatSystem;
+use crate::systems::monster_ai::MonsterAI;
+use crate::visibility_system::VisibilitySystem;
 
 use rltk::{GameState, Rltk};
 use specs::prelude::*;
@@ -30,7 +31,10 @@ impl State {
 
         let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
-        damage_system::delete_the_dead(&mut self.ecs);
+        systems::damage::delete_the_dead(&mut self.ecs);
+
+        let mut pickup = ItemCollectionSystem {};
+        pickup.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -65,7 +69,7 @@ impl GameState for State {
             *run_writer = new_run_state;
         }
 
-        damage_system::delete_the_dead(&mut self.ecs);
+        systems::damage::delete_the_dead(&mut self.ecs);
 
         map::draw_map(&self.ecs, ctx);
 
