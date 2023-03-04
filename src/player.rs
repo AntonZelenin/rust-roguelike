@@ -83,6 +83,8 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::I => return RunState::ShowInventory,
 
+            VirtualKeyCode::O => return RunState::ShowDropItem,
+
             _ => { return RunState::AwaitingInput; }
         },
     }
