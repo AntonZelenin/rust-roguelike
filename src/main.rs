@@ -13,7 +13,7 @@ mod systems;
 use crate::state::{RunState, State};
 use crate::player::Player;
 use specs::prelude::*;
-use crate::components::{BlocksTile, CombatStats, InBackpack, Item, Name, Position, Potion, Renderable, SufferDamage, Viewshed, WantsToMelee, WantsToPickupItem};
+use crate::components::{BlocksTile, CombatStats, InBackpack, Item, Name, Position, Potion, Renderable, SufferDamage, Viewshed, WantsToDrinkPotion, WantsToMelee, WantsToPickupItem};
 use crate::monster::Monster;
 
 fn main() -> rltk::BError {
@@ -56,6 +56,7 @@ fn register_components(gs: &mut State) {
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<WantsToDrinkPotion>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<WantsToPickupItem>();
 }

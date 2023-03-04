@@ -67,6 +67,11 @@ pub struct Viewshed {
     pub dirty: bool,
 }
 
+#[derive(Component, Debug)]
+pub struct WantsToDrinkPotion {
+    pub potion: Entity,
+}
+
 #[derive(Component, Debug, Clone)]
 pub struct WantsToMelee {
     pub target: Entity,

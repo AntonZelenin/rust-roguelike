@@ -68,18 +68,20 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             // Diagonals
             VirtualKeyCode::Numpad9 |
-            VirtualKeyCode::I => try_move(1, -1, &mut gs.ecs),
+            VirtualKeyCode::E => try_move(1, -1, &mut gs.ecs),
 
             VirtualKeyCode::Numpad7 |
-            VirtualKeyCode::U => try_move(-1, -1, &mut gs.ecs),
+            VirtualKeyCode::Q => try_move(-1, -1, &mut gs.ecs),
 
             VirtualKeyCode::Numpad3 |
-            VirtualKeyCode::K => try_move(1, 1, &mut gs.ecs),
+            VirtualKeyCode::X => try_move(1, 1, &mut gs.ecs),
 
             VirtualKeyCode::Numpad1 |
-            VirtualKeyCode::J => try_move(-1, 1, &mut gs.ecs),
+            VirtualKeyCode::Z => try_move(-1, 1, &mut gs.ecs),
 
             VirtualKeyCode::G => get_item(&mut gs.ecs),
+
+            VirtualKeyCode::I => return RunState::ShowInventory,
 
             _ => { return RunState::AwaitingInput; }
         },
