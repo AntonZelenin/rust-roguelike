@@ -1,4 +1,4 @@
-use crate::components::{CombatStats, InBackpack, Name, Position};
+use crate::components::{CombatStats, InBackpack, Name, Position, Viewshed};
 use crate::game_log::GameLog;
 use crate::map::Map;
 use crate::player::Player;
@@ -123,8 +123,7 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
     ctx.print_color(18, y + count as i32 + 1, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "ESCAPE to cancel");
 
     let mut equippable: Vec<Entity> = Vec::new();
-    let mut j = 0;
-    for (entity, _pack, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity) {
+    for (j, (entity, _pack, name)) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity).enumerate() {
         ctx.set(17, y, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), rltk::to_cp437('('));
         ctx.set(18, y, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), 97 + j as rltk::FontCharType);
         ctx.set(19, y, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), rltk::to_cp437(')'));
@@ -132,7 +131,6 @@ pub fn show_inventory(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
         ctx.print(21, y, &name.name.to_string());
         equippable.push(entity);
         y += 1;
-        j += 1;
     }
 
     match ctx.key {
@@ -167,8 +165,7 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
     ctx.print_color(18, y + count as i32 + 1, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "ESCAPE to cancel");
 
     let mut equipable: Vec<Entity> = Vec::new();
-    let mut j = 0;
-    for (entity, _pack, name) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity) {
+    for (j, (entity, _pack, name)) in (&entities, &backpack, &names).join().filter(|item| item.1.owner == *player_entity).enumerate() {
         ctx.set(17, y, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), rltk::to_cp437('('));
         ctx.set(18, y, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), 97 + j as rltk::FontCharType);
         ctx.set(19, y, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK), rltk::to_cp437(')'));
@@ -176,7 +173,6 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
         ctx.print(21, y, &name.name.to_string());
         equipable.push(entity);
         y += 1;
-        j += 1;
     }
 
     match ctx.key {
@@ -194,4 +190,43 @@ pub fn drop_item_menu(gs: &mut State, ctx: &mut Rltk) -> (ItemMenuResult, Option
             }
         }
     }
+}
+
+pub fn ranged_target(gs: &mut State, ctx: &mut Rltk, range: i32) -> (ItemMenuResult, Option<Point>) {
+    let player_entity = gs.ecs.fetch::<Entity>();
+    let player_pos = gs.ecs.fetch::<Point>();
+    let viewsheds = gs.ecs.read_storage::<Viewshed>();
+
+    ctx.print_color(5, 0, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), "Select Target:");
+
+    let mut available_cells = Vec::new();
+    let visible = viewsheds.get(*player_entity);
+    if let Some(visible) = visible {
+        for idx in visible.visible_tiles.iter() {
+            let distance = rltk::DistanceAlg::Pythagoras.distance2d(*player_pos, *idx);
+            if distance <= range as f32 {
+                ctx.set_bg(idx.x, idx.y, RGB::named(rltk::BLUE));
+                available_cells.push(idx);
+            }
+        }
+    } else {
+        return (ItemMenuResult::Cancel, None);
+    }
+
+    let mouse_pos = ctx.mouse_pos();
+    let mut valid_target = false;
+    for idx in available_cells.iter() { if idx.x == mouse_pos.0 && idx.y == mouse_pos.1 { valid_target = true; } }
+    if valid_target {
+        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::CYAN));
+        if ctx.left_click {
+            return (ItemMenuResult::Selected, Some(Point::new(mouse_pos.0, mouse_pos.1)));
+        }
+    } else {
+        ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::RED));
+        if ctx.left_click {
+            return (ItemMenuResult::Cancel, None);
+        }
+    }
+
+    (ItemMenuResult::NoResponse, None)
 }

@@ -13,7 +13,7 @@ mod systems;
 use crate::state::{RunState, State};
 use crate::player::Player;
 use specs::prelude::*;
-use crate::components::{BlocksTile, CombatStats, InBackpack, Item, Name, Position, Potion, Renderable, SufferDamage, Viewshed, WantsToDrinkPotion, WantsToDropItem, WantsToMelee, WantsToPickupItem};
+use crate::components::{BlocksTile, CombatStats, Consumable, InBackpack, InflictsDamage, Item, Name, Position, Ranged, Renderable, SufferDamage, Viewshed, WantsToUseItem, WantsToDropItem, WantsToMelee, WantsToPickupItem, Confusion, ProvidesHealing, AreaOfEffect};
 use crate::monster::Monster;
 
 fn main() -> rltk::BError {
@@ -44,20 +44,25 @@ fn main() -> rltk::BError {
 }
 
 fn register_components(gs: &mut State) {
+    gs.ecs.register::<AreaOfEffect>();
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
+    gs.ecs.register::<Confusion>();
+    gs.ecs.register::<Consumable>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<InBackpack>();
+    gs.ecs.register::<InflictsDamage>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Position>();
-    gs.ecs.register::<Potion>();
+    gs.ecs.register::<ProvidesHealing>();
+    gs.ecs.register::<Ranged>();
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<SufferDamage>();
     gs.ecs.register::<Viewshed>();
     gs.ecs.register::<WantsToDropItem>();
-    gs.ecs.register::<WantsToDrinkPotion>();
+    gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<WantsToPickupItem>();
 }
