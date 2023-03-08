@@ -1,6 +1,5 @@
-use crate::components::{Position, Viewshed};
+use crate::components::{Player, Position, Viewshed};
 use crate::map::Map;
-use crate::player::Player;
 use rltk::{field_of_view, Point};
 use specs::prelude::*;
 

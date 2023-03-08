@@ -1,6 +1,7 @@
 use crate::{gui, map, player, systems};
 use crate::components::{Position, Ranged, Renderable, WantsToUseItem, WantsToDropItem};
 use crate::map::Map;
+use crate::menu::main_menu;
 use crate::systems::damage::DamageSystem;
 use crate::systems::inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem};
 use crate::systems::map_indexing::MapIndexingSystem;
@@ -10,7 +11,6 @@ use crate::visibility_system::VisibilitySystem;
 
 use rltk::{GameState, Rltk};
 use specs::prelude::*;
-use crate::menu::main_menu;
 
 pub struct State {
     pub ecs: World,
@@ -156,13 +156,18 @@ impl GameState for State {
                     gui::MainMenuResult::Selected { selected } => {
                         match selected {
                             gui::MainMenuSelection::NewGame => new_run_state = RunState::PreRun,
-                            gui::MainMenuSelection::LoadGame => new_run_state = RunState::PreRun,
-                            gui::MainMenuSelection::Quit => { ::std::process::exit(0); }
+                            gui::MainMenuSelection::LoadGame => {
+                                systems::save_load::load_game(&mut self.ecs);
+                                new_run_state = RunState::AwaitingInput;
+                                systems::save_load::delete_save();
+                            }
+                            gui::MainMenuSelection::Quit => { std::process::exit(0); }
                         }
                     }
                 }
             }
             RunState::SaveGame => {
+                systems::save_load::save_game(&mut self.ecs);
                 new_run_state = RunState::MainMenu { menu_selection: gui::MainMenuSelection::LoadGame };
             }
         }

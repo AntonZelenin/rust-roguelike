@@ -1,6 +1,5 @@
-use crate::components::{CombatStats, Name, SufferDamage};
+use crate::components::{CombatStats, Name, Player, SufferDamage};
 use crate::game_log::GameLog;
-use crate::player::Player;
 use specs::prelude::*;
 
 pub struct DamageSystem {}

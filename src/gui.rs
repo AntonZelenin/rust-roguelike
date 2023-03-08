@@ -1,7 +1,6 @@
-use crate::components::{CombatStats, InBackpack, Name, Position, Viewshed};
+use crate::components::{CombatStats, InBackpack, Name, Player, Position, Viewshed};
 use crate::game_log::GameLog;
 use crate::map::Map;
-use crate::player::Player;
 use crate::state::State;
 
 use rltk::{BTerm, Point, RGB, Rltk, VirtualKeyCode};

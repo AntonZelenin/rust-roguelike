@@ -1,7 +1,6 @@
 use specs::prelude::*;
-use crate::components::{Confusion, Position, Viewshed, WantsToMelee};
+use crate::components::{Confusion, Monster, Position, Viewshed, WantsToMelee};
 use crate::map::Map;
-use crate::monster::Monster;
 use crate::state::RunState;
 use rltk::{Point};
 

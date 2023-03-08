@@ -3,7 +3,6 @@ mod game_log;
 mod gui;
 mod map;
 mod menu;
-mod monster;
 mod player;
 mod rect;
 mod spawner;
@@ -11,11 +10,10 @@ mod state;
 mod visibility_system;
 mod systems;
 
+use crate::components::*;
 use crate::state::{RunState, State};
-use crate::player::Player;
 use specs::prelude::*;
-use crate::components::{BlocksTile, CombatStats, Consumable, InBackpack, InflictsDamage, Item, Name, Position, Ranged, Renderable, SufferDamage, Viewshed, WantsToUseItem, WantsToDropItem, WantsToMelee, WantsToPickupItem, Confusion, ProvidesHealing, AreaOfEffect};
-use crate::monster::Monster;
+use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
 
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
@@ -29,6 +27,9 @@ fn main() -> rltk::BError {
     };
 
     register_components(&mut gs);
+
+    // it should be inserted earlier than the rest, otherwise it will crash
+    gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
     let map = map::Map::new_with_rooms_and_corridors();
     let player = spawner::create_player(&mut gs, &map);
@@ -66,4 +67,7 @@ fn register_components(gs: &mut State) {
     gs.ecs.register::<WantsToUseItem>();
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<WantsToPickupItem>();
+
+    gs.ecs.register::<SerializationHelper>();
+    gs.ecs.register::<SimpleMarker<SerializeMe>>();
 }

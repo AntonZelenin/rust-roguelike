@@ -1,14 +1,10 @@
-use crate::components::{CombatStats, Item, Position, Viewshed, WantsToMelee, WantsToPickupItem};
+use crate::components::{CombatStats, Item, Player, Position, Viewshed, WantsToMelee, WantsToPickupItem};
 use crate::game_log::GameLog;
 use crate::map::Map;
 use crate::state::{RunState, State};
 
 use rltk::{Point, Rltk, VirtualKeyCode};
 use specs::prelude::*;
-use specs_derive::Component;
-
-#[derive(Component, Debug)]
-pub struct Player {}
 
 fn try_move(delta_x: i32, delta_y: i32, ecs: &mut World) {
     let mut positions = ecs.write_storage::<Position>();

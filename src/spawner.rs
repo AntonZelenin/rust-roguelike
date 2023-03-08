@@ -1,12 +1,11 @@
 use crate::state::State;
 use crate::map::Map;
-use crate::components::{AreaOfEffect, BlocksTile, CombatStats, Confusion, Consumable, InflictsDamage, Item, Name, Position, ProvidesHealing, Ranged, Renderable, Viewshed};
-use crate::monster::Monster;
-use crate::player::Player;
+use crate::components::*;
 use rltk::{Point, RandomNumberGenerator, RGB};
 use specs::Entity;
 use specs::prelude::*;
 use crate::rect::Rect;
+use specs::saveload::{MarkedBuilder, SimpleMarker};
 
 const MAX_MONSTERS_PER_ROOM: i32 = 4;
 const MAX_ITEMS_PER_ROOM: i32 = 2;
@@ -26,6 +25,7 @@ pub(crate) fn create_player(gs: &mut State, map: &Map) -> Entity {
         .with(Viewshed { visible_tiles: Vec::new(), range: 8, dirty: true })
         .with(Name { name: "Player".to_string() })
         .with(CombatStats { max_hp: 30, hp: 30, defense: 2, power: 5 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
     gs.ecs.insert(Point::new(player_x, player_y));
     player_entity
@@ -114,6 +114,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
         .with(Name { name: name.to_string() })
         .with(BlocksTile {})
         .with(CombatStats { max_hp: 16, hp: 16, defense: 1, power: 4 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -144,6 +145,7 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
         .with(Item {})
         .with(Consumable {})
         .with(ProvidesHealing { heal_amount: 8 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -161,6 +163,7 @@ fn magic_missile_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Consumable {})
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 8 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 
@@ -179,6 +182,7 @@ fn fireball_scroll(ecs: &mut World, x: i32, y: i32) {
         .with(Ranged { range: 6 })
         .with(InflictsDamage { damage: 20 })
         .with(AreaOfEffect { radius: 3 })
+        .marked::<SimpleMarker<SerializeMe>>()
         .build();
 }
 

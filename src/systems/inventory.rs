@@ -1,5 +1,5 @@
 use specs::prelude::*;
-use crate::components::{AreaOfEffect, CombatStats, Confusion, Consumable, InBackpack, InflictsDamage, Name, Position, ProvidesHealing, SufferDamage, WantsToDropItem, WantsToPickupItem, WantsToUseItem};
+use crate::components::*;
 use crate::game_log::GameLog;
 use crate::map::Map;
 
