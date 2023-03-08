@@ -31,11 +31,11 @@ fn main() -> rltk::BError {
     // it should be inserted earlier than the rest, otherwise it will crash
     gs.ecs.insert(SimpleMarkerAllocator::<SerializeMe>::new());
 
-    let map = map::Map::new_with_rooms_and_corridors();
+    let map = map::Map::new_with_rooms_and_corridors(1);
     let player = spawner::create_player(&mut gs, &map);
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
     for room in map.rooms.iter().skip(1) {
-        spawner::spawn_room(&mut gs.ecs, room, &map);
+        spawner::spawn_room(&mut gs.ecs, room);
     }
     gs.ecs.insert(map);
     gs.ecs.insert(player);

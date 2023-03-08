@@ -5,14 +5,15 @@ use specs::prelude::*;
 use specs::World;
 use std::cmp::{max, min};
 
-const MAP_WIDTH: usize = 80;
-const MAP_HEIGHT: usize = 43;
+pub(crate) const MAP_WIDTH: usize = 80;
+pub(crate) const MAP_HEIGHT: usize = 43;
 pub(crate) const MAP_CELL_COUNT: usize = MAP_HEIGHT * MAP_WIDTH;
 
 #[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
 pub enum TileType {
     Wall,
     Floor,
+    DownStairs,
 }
 
 #[derive(Default, Serialize, Deserialize, Clone)]
@@ -24,6 +25,7 @@ pub struct Map {
     pub revealed_tiles: Vec<bool>,
     pub visible_tiles: Vec<bool>,
     pub blocked: Vec<bool>,
+    pub depth: i32,
 
     #[serde(skip_serializing)]
     #[serde(skip_deserializing)]
@@ -35,7 +37,7 @@ impl Map {
         (y * self.width + x) as usize
     }
 
-    pub fn new_with_rooms_and_corridors() -> Map {
+    pub fn new_with_rooms_and_corridors(depth: i32) -> Map {
         let mut map = Map {
             tiles: vec![TileType::Wall; MAP_CELL_COUNT],
             rooms: Vec::new(),
@@ -45,6 +47,7 @@ impl Map {
             visible_tiles: vec![false; MAP_CELL_COUNT],
             blocked: vec![false; MAP_CELL_COUNT],
             tile_content: vec![Vec::new(); MAP_CELL_COUNT],
+            depth,
         };
 
         const MAX_ROOMS: i32 = 30;
@@ -81,6 +84,10 @@ impl Map {
                 map.rooms.push(new_room);
             }
         }
+
+        let stairs_position = map.rooms[map.rooms.len() - 1].center();
+        let stairs_idx = map.xy_idx(stairs_position.0, stairs_position.1);
+        map.tiles[stairs_idx] = TileType::DownStairs;
 
         map
     }
@@ -188,6 +195,10 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
                 TileType::Wall => {
                     glyph = rltk::to_cp437('#');
                     fg = RGB::from_f32(0., 1.0, 0.);
+                }
+                TileType::DownStairs => {
+                    glyph = rltk::to_cp437('>');
+                    fg = RGB::from_f32(0., 1.0, 1.0);
                 }
             }
             if !map.visible_tiles[idx] { fg = fg.to_greyscale() }

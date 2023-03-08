@@ -1,5 +1,5 @@
-use crate::{gui, map, player, systems};
-use crate::components::{Position, Ranged, Renderable, WantsToUseItem, WantsToDropItem};
+use crate::{game_log, gui, map, player, spawner, systems};
+use crate::components::{Position, Ranged, Renderable, WantsToUseItem, WantsToDropItem, Player, InBackpack, Viewshed, CombatStats};
 use crate::map::Map;
 use crate::menu::main_menu;
 use crate::systems::damage::DamageSystem;
@@ -9,7 +9,7 @@ use crate::systems::melee_combat::MeleeCombatSystem;
 use crate::systems::monster_ai::MonsterAI;
 use crate::visibility_system::VisibilitySystem;
 
-use rltk::{GameState, Rltk};
+use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
 
 pub struct State {
@@ -44,6 +44,86 @@ impl State {
         drop_items.run_now(&self.ecs);
 
         self.ecs.maintain();
+    }
+
+    fn entities_to_remove_on_level_change(&mut self) -> Vec<Entity> {
+        let entities = self.ecs.entities();
+        let player = self.ecs.read_storage::<Player>();
+        let backpack = self.ecs.read_storage::<InBackpack>();
+        let player_entity = self.ecs.fetch::<Entity>();
+
+        let mut to_delete: Vec<Entity> = Vec::new();
+        for entity in entities.join() {
+            let mut should_delete = true;
+
+            let p = player.get(entity);
+            if let Some(_p) = p {
+                should_delete = false;
+            }
+
+            let bp = backpack.get(entity);
+            if let Some(bp) = bp {
+                if bp.owner == *player_entity {
+                    should_delete = false;
+                }
+            }
+
+            if should_delete {
+                to_delete.push(entity);
+            }
+        }
+
+        to_delete
+    }
+
+    fn goto_next_level(&mut self) {
+        // Delete entities that aren't the player or his/her equipment
+        let to_delete = self.entities_to_remove_on_level_change();
+        for target in to_delete {
+            self.ecs.delete_entity(target).expect("Unable to delete entity");
+        }
+
+        // Build a new map and place the player
+        let worldmap;
+        {
+            let mut worldmap_resource = self.ecs.write_resource::<Map>();
+            let current_depth = worldmap_resource.depth;
+            *worldmap_resource = Map::new_with_rooms_and_corridors(current_depth + 1);
+            worldmap = worldmap_resource.clone();
+        }
+
+        // Spawn bad guys
+        for room in worldmap.rooms.iter().skip(1) {
+            spawner::spawn_room(&mut self.ecs, room);
+        }
+
+        // Place the player and update resources
+        let (player_x, player_y) = worldmap.rooms[0].center();
+        let mut player_position = self.ecs.write_resource::<Point>();
+        *player_position = Point::new(player_x, player_y);
+        let mut position_components = self.ecs.write_storage::<Position>();
+        let player_entity = self.ecs.fetch::<Entity>();
+        let player_pos_comp = position_components.get_mut(*player_entity);
+        if let Some(player_pos_comp) = player_pos_comp {
+            player_pos_comp.x = player_x;
+            player_pos_comp.y = player_y;
+        }
+
+        // Mark the player's visibility as dirty
+        let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
+        let vs = viewshed_components.get_mut(*player_entity);
+        if let Some(vs) = vs {
+            vs.dirty = true;
+        }
+
+        // Notify the player and give them some health
+        let mut game_log = self.ecs.fetch_mut::<game_log::GameLog>();
+        game_log.entries.push("You descend to the next level, and take a moment to heal.".to_string());
+        let mut player_health_store = self.ecs.write_storage::<CombatStats>();
+        let player_health = player_health_store.get_mut(*player_entity);
+        if let Some(player_health) = player_health {
+            player_health.hp = i32::max(player_health.hp, player_health.max_hp / 2);
+        }
     }
 }
 
@@ -170,6 +250,10 @@ impl GameState for State {
                 systems::save_load::save_game(&mut self.ecs);
                 new_run_state = RunState::MainMenu { menu_selection: gui::MainMenuSelection::LoadGame };
             }
+            RunState::NextLevel => {
+                self.goto_next_level();
+                new_run_state = RunState::PreRun;
+            }
         }
 
         // todo why is it here? It's not used?
@@ -193,4 +277,5 @@ pub enum RunState {
     ShowTargeting { range: i32, item: Entity },
     MainMenu { menu_selection: gui::MainMenuSelection },
     SaveGame,
+    NextLevel,
 }

@@ -6,6 +6,7 @@ use specs::Entity;
 use specs::prelude::*;
 use crate::rect::Rect;
 use specs::saveload::{MarkedBuilder, SimpleMarker};
+use crate::map;
 
 const MAX_MONSTERS_PER_ROOM: i32 = 4;
 const MAX_ITEMS_PER_ROOM: i32 = 2;
@@ -24,14 +25,14 @@ pub(crate) fn create_player(gs: &mut State, map: &Map) -> Entity {
         })
         .with(Viewshed { visible_tiles: Vec::new(), range: 8, dirty: true })
         .with(Name { name: "Player".to_string() })
-        .with(CombatStats { max_hp: 30, hp: 30, defense: 2, power: 5 })
+        .with(CombatStats { max_hp: 150, hp: 150, defense: 2, power: 5 })
         .marked::<SimpleMarker<SerializeMe>>()
         .build();
     gs.ecs.insert(Point::new(player_x, player_y));
     player_entity
 }
 
-pub fn spawn_room(ecs: &mut World, room: &Rect, map: &Map) {
+pub fn spawn_room(ecs: &mut World, room: &Rect) {
     let mut monster_spawn_points: Vec<usize> = Vec::new();
     let mut item_spawn_points: Vec<usize> = Vec::new();
 
@@ -40,12 +41,12 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map: &Map) {
         let num_monsters = rng.roll_dice(1, MAX_MONSTERS_PER_ROOM + 2) - 3;
         let num_items = rng.roll_dice(1, MAX_ITEMS_PER_ROOM + 2) - 3;
 
-        for _ in 0..num_monsters {
+        for _i in 0..num_monsters {
             let mut added = false;
             while !added {
                 let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
                 let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
-                let idx = (y * map.width as usize) + x;
+                let idx = (y * map::MAP_WIDTH) + x;
                 if !monster_spawn_points.contains(&idx) {
                     monster_spawn_points.push(idx);
                     added = true;
@@ -53,12 +54,12 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map: &Map) {
             }
         }
 
-        for _ in 0..num_items {
+        for _i in 0..num_items {
             let mut added = false;
             while !added {
                 let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
                 let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
-                let idx = (y * map.width as usize) + x;
+                let idx = (y * map::MAP_WIDTH) + x;
                 if !item_spawn_points.contains(&idx) {
                     item_spawn_points.push(idx);
                     added = true;
@@ -68,14 +69,14 @@ pub fn spawn_room(ecs: &mut World, room: &Rect, map: &Map) {
     }
 
     for idx in monster_spawn_points.iter() {
-        let x = *idx % map.width as usize;
-        let y = *idx / map.width as usize;
+        let x = *idx % map::MAP_WIDTH;
+        let y = *idx / map::MAP_WIDTH;
         random_monster(ecs, x as i32, y as i32);
     }
 
     for idx in item_spawn_points.iter() {
-        let x = *idx % map.width as usize;
-        let y = *idx / map.width as usize;
+        let x = *idx % map::MAP_WIDTH;
+        let y = *idx / map::MAP_WIDTH;
         random_item(ecs, x as i32, y as i32);
     }
 }

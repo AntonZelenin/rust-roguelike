@@ -35,6 +35,10 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     ctx.set_bg(mouse_pos.0, mouse_pos.1, RGB::named(rltk::MAGENTA));
 
     draw_tooltips(ecs, ctx);
+
+    let map = ecs.fetch::<Map>();
+    let depth = format!("Depth: {}", map.depth);
+    ctx.print_color(2, 43, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), &depth);
 }
 
 fn print_game_log(ecs: &World, ctx: &mut BTerm) {
