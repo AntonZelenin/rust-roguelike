@@ -2,6 +2,7 @@ mod components;
 mod game_log;
 mod gui;
 mod map;
+mod menu;
 mod monster;
 mod player;
 mod rect;

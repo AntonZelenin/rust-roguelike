@@ -85,6 +85,8 @@ pub fn read_input(gs: &mut State, ctx: &mut Rltk) -> RunState {
 
             VirtualKeyCode::O => return RunState::ShowDropItem,
 
+            VirtualKeyCode::Escape => return RunState::SaveGame,
+
             _ => { return RunState::AwaitingInput; }
         },
     }

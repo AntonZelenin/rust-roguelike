@@ -10,6 +10,7 @@ use crate::visibility_system::VisibilitySystem;
 
 use rltk::{GameState, Rltk};
 use specs::prelude::*;
+use crate::menu::main_menu;
 
 pub struct State {
     pub ecs: World,
@@ -50,7 +51,34 @@ impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
-        let mut new_run_state = *self.ecs.fetch::<RunState>();
+        let mut new_run_state;
+        {
+            let run_state = self.ecs.fetch::<RunState>();
+            new_run_state = *run_state;
+        }
+
+        ctx.cls();
+
+        match new_run_state {
+            RunState::MainMenu { .. } => {}
+            _ => {
+                map::draw_map(&self.ecs, ctx);
+                {
+                    let positions = self.ecs.read_storage::<Position>();
+                    let renderables = self.ecs.read_storage::<Renderable>();
+                    let map = self.ecs.fetch::<Map>();
+
+                    let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
+                    data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
+                    for (pos, render) in data.iter() {
+                        let idx = map.xy_idx(pos.x, pos.y);
+                        if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph) }
+                    }
+
+                    gui::draw_ui(&self.ecs, ctx);
+                }
+            }
+        }
 
         match new_run_state {
             RunState::PreRun => {
@@ -121,29 +149,31 @@ impl GameState for State {
                     }
                 }
             }
+            RunState::MainMenu { .. } => {
+                let result = main_menu(self, ctx);
+                match result {
+                    gui::MainMenuResult::NoSelection { selected } => new_run_state = RunState::MainMenu { menu_selection: selected },
+                    gui::MainMenuResult::Selected { selected } => {
+                        match selected {
+                            gui::MainMenuSelection::NewGame => new_run_state = RunState::PreRun,
+                            gui::MainMenuSelection::LoadGame => new_run_state = RunState::PreRun,
+                            gui::MainMenuSelection::Quit => { ::std::process::exit(0); }
+                        }
+                    }
+                }
+            }
+            RunState::SaveGame => {
+                new_run_state = RunState::MainMenu { menu_selection: gui::MainMenuSelection::LoadGame };
+            }
         }
 
+        // todo why is it here? It's not used?
         {
             let mut run_writer = self.ecs.write_resource::<RunState>();
             *run_writer = new_run_state;
         }
 
         systems::damage::delete_the_dead(&mut self.ecs);
-
-        map::draw_map(&self.ecs, ctx);
-
-        let positions = self.ecs.read_storage::<Position>();
-        let renderables = self.ecs.read_storage::<Renderable>();
-        let map = self.ecs.fetch::<Map>();
-
-        let mut data = (&positions, &renderables).join().collect::<Vec<_>>();
-        data.sort_by(|&a, &b| b.1.render_order.cmp(&a.1.render_order));
-        for (pos, render) in data.iter() {
-            let idx = map.xy_idx(pos.x, pos.y);
-            if map.visible_tiles[idx] { ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph) }
-        }
-
-        gui::draw_ui(&self.ecs, ctx);
     }
 }
 
@@ -156,4 +186,6 @@ pub enum RunState {
     ShowDropItem,
     ShowInventory,
     ShowTargeting { range: i32, item: Entity },
+    MainMenu { menu_selection: gui::MainMenuSelection },
+    SaveGame,
 }
