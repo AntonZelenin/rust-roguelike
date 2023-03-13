@@ -84,21 +84,22 @@ impl State {
         }
 
         // Build a new map and place the player
-        let worldmap;
+        let world_map;
+        let current_depth;
         {
-            let mut worldmap_resource = self.ecs.write_resource::<Map>();
-            let current_depth = worldmap_resource.depth;
-            *worldmap_resource = Map::new_with_rooms_and_corridors(current_depth + 1);
-            worldmap = worldmap_resource.clone();
+            let mut world_map_resource = self.ecs.write_resource::<Map>();
+            current_depth = world_map_resource.depth;
+            *world_map_resource = Map::new_with_rooms_and_corridors(current_depth + 1);
+            world_map = world_map_resource.clone();
         }
 
         // Spawn bad guys
-        for room in worldmap.rooms.iter().skip(1) {
-            spawner::spawn_room(&mut self.ecs, room);
+        for room in world_map.rooms.iter().skip(1) {
+            spawner::spawn_room(&mut self.ecs, room, &world_map, current_depth);
         }
 
         // Place the player and update resources
-        let (player_x, player_y) = worldmap.rooms[0].center();
+        let (player_x, player_y) = world_map.rooms[0].center();
         let mut player_position = self.ecs.write_resource::<Point>();
         *player_position = Point::new(player_x, player_y);
         let mut position_components = self.ecs.write_storage::<Position>();

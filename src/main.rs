@@ -4,6 +4,7 @@ mod gui;
 mod map;
 mod menu;
 mod player;
+mod random_table;
 mod rect;
 mod spawner;
 mod state;
@@ -35,7 +36,7 @@ fn main() -> rltk::BError {
     let player = spawner::create_player(&mut gs, &map);
     gs.ecs.insert(rltk::RandomNumberGenerator::new());
     for room in map.rooms.iter().skip(1) {
-        spawner::spawn_room(&mut gs.ecs, room);
+        spawner::spawn_room(&mut gs.ecs, room, &map, 1);
     }
     gs.ecs.insert(map);
     gs.ecs.insert(player);
