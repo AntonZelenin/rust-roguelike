@@ -1,9 +1,9 @@
 use crate::{game_log, gui, map, player, spawner, systems};
-use crate::components::{Position, Ranged, Renderable, WantsToUseItem, WantsToDropItem, Player, InBackpack, Viewshed, CombatStats, Equipped};
+use crate::components::{Position, Ranged, Renderable, WantsToUseItem, WantsToDropItem, Player, InBackpack, Viewshed, CombatStats, Equipped, WantsToRemoveItem};
 use crate::map::Map;
 use crate::menu::main_menu;
 use crate::systems::damage::DamageSystem;
-use crate::systems::inventory::{ItemCollectionSystem, ItemDropSystem, ItemUseSystem};
+use crate::systems::inventory::{ItemCollectionSystem, ItemDropSystem, ItemRemoveSystem, ItemUseSystem};
 use crate::systems::map_indexing::MapIndexingSystem;
 use crate::systems::melee_combat::MeleeCombatSystem;
 use crate::systems::monster_ai::MonsterAI;
@@ -42,6 +42,9 @@ impl State {
 
         let mut drop_items = ItemDropSystem {};
         drop_items.run_now(&self.ecs);
+
+        let mut item_remove = ItemRemoveSystem {};
+        item_remove.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -134,6 +137,51 @@ impl State {
         let player_health = player_health_store.get_mut(*player_entity);
         if let Some(player_health) = player_health {
             player_health.hp = i32::max(player_health.hp, player_health.max_hp / 2);
+        }
+    }
+
+    fn game_over_cleanup(&mut self) {
+        // Delete everything
+        let mut to_delete = Vec::new();
+        for e in self.ecs.entities().join() {
+            to_delete.push(e);
+        }
+        for del in to_delete.iter() {
+            self.ecs.delete_entity(*del).expect("Deletion failed");
+        }
+
+        // Build a new map and place the player
+        let world_map;
+        {
+            let mut world_map_resource = self.ecs.write_resource::<Map>();
+            *world_map_resource = Map::new_with_rooms_and_corridors(1);
+            world_map = world_map_resource.clone();
+        }
+
+        // Spawn bad guys
+        for room in world_map.rooms.iter().skip(1) {
+            spawner::spawn_room(&mut self.ecs, room,  &world_map, 1);
+        }
+
+        // Place the player and update resources
+        let (player_x, player_y) = world_map.rooms[0].center();
+        let player_entity = spawner::create_player(&mut self.ecs, player_x, player_y);
+        let mut player_position = self.ecs.write_resource::<Point>();
+        *player_position = Point::new(player_x, player_y);
+        let mut position_components = self.ecs.write_storage::<Position>();
+        let mut player_entity_writer = self.ecs.write_resource::<Entity>();
+        *player_entity_writer = player_entity;
+        let player_pos_comp = position_components.get_mut(player_entity);
+        if let Some(player_pos_comp) = player_pos_comp {
+            player_pos_comp.x = player_x;
+            player_pos_comp.y = player_y;
+        }
+
+        // Mark the player's visibility as dirty
+        let mut viewshed_components = self.ecs.write_storage::<Viewshed>();
+        let vs = viewshed_components.get_mut(player_entity);
+        if let Some(vs) = vs {
+            vs.dirty = true;
         }
     }
 }
@@ -265,6 +313,29 @@ impl GameState for State {
                 self.goto_next_level();
                 new_run_state = RunState::PreRun;
             }
+            RunState::ShowRemoveItem => {
+                let result = gui::remove_item_menu(self, ctx);
+                match result.0 {
+                    gui::ItemMenuResult::Cancel => new_run_state = RunState::AwaitingInput,
+                    gui::ItemMenuResult::NoResponse => {}
+                    gui::ItemMenuResult::Selected => {
+                        let item_entity = result.1.unwrap();
+                        let mut intent = self.ecs.write_storage::<WantsToRemoveItem>();
+                        intent.insert(*self.ecs.fetch::<Entity>(), WantsToRemoveItem { item: item_entity }).expect("Unable to insert intent");
+                        new_run_state = RunState::PlayerTurn;
+                    }
+                }
+            }
+            RunState::GameOver => {
+                let result = gui::game_over(ctx);
+                match result {
+                    gui::GameOverResult::NoSelection => {}
+                    gui::GameOverResult::QuitToMenu => {
+                        self.game_over_cleanup();
+                        new_run_state = RunState::MainMenu { menu_selection: gui::MainMenuSelection::NewGame };
+                    }
+                }
+            }
         }
 
         // todo why is it here? It's not used?
@@ -289,4 +360,6 @@ pub enum RunState {
     MainMenu { menu_selection: gui::MainMenuSelection },
     SaveGame,
     NextLevel,
+    ShowRemoveItem,
+    GameOver,
 }
