@@ -29,6 +29,23 @@ pub struct Confusion {
 #[derive(Component, Serialize, Deserialize, Debug, Clone)]
 pub struct Consumable {}
 
+#[derive(Component, ConvertSaveload, Clone)]
+pub struct Equipped {
+    pub owner: Entity,
+    pub slot: EquipmentSlot,
+}
+
+#[derive(PartialEq, Copy, Clone, Serialize, Deserialize)]
+pub enum EquipmentSlot {
+    Melee,
+    Shield,
+}
+
+#[derive(Component, Serialize, Deserialize, Clone)]
+pub struct Equippable {
+    pub slot: EquipmentSlot,
+}
+
 #[derive(Component, ConvertSaveload, Debug, Clone)]
 pub struct InBackpack {
     pub owner: Entity,

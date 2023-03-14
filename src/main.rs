@@ -52,6 +52,8 @@ fn register_components(gs: &mut State) {
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<Confusion>();
     gs.ecs.register::<Consumable>();
+    gs.ecs.register::<Equipped>();
+    gs.ecs.register::<Equippable>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<InBackpack>();
     gs.ecs.register::<InflictsDamage>();
