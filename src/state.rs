@@ -11,6 +11,7 @@ use crate::visibility_system::VisibilitySystem;
 
 use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
+use crate::systems::particle;
 
 pub struct State {
     pub ecs: World,
@@ -45,6 +46,9 @@ impl State {
 
         let mut item_remove = ItemRemoveSystem {};
         item_remove.run_now(&self.ecs);
+
+        let mut particles = particle::ParticleSpawnSystem {};
+        particles.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -160,7 +164,7 @@ impl State {
 
         // Spawn bad guys
         for room in world_map.rooms.iter().skip(1) {
-            spawner::spawn_room(&mut self.ecs, room,  &world_map, 1);
+            spawner::spawn_room(&mut self.ecs, room, &world_map, 1);
         }
 
         // Place the player and update resources
@@ -188,8 +192,6 @@ impl State {
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut Rltk) {
-        ctx.cls();
-
         let mut new_run_state;
         {
             let run_state = self.ecs.fetch::<RunState>();
@@ -197,6 +199,7 @@ impl GameState for State {
         }
 
         ctx.cls();
+        particle::cull_dead_particles(&mut self.ecs, ctx);
 
         match new_run_state {
             RunState::MainMenu { .. } => {}

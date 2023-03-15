@@ -16,6 +16,7 @@ use crate::components::*;
 use crate::state::{RunState, State};
 use specs::prelude::*;
 use specs::saveload::{SimpleMarker, SimpleMarkerAllocator};
+use crate::systems::particle;
 
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
@@ -47,6 +48,7 @@ fn main() -> rltk::BError {
     gs.ecs.insert(player);
     gs.ecs.insert(RunState::PreRun);
     gs.ecs.insert(game_log::GameLog { entries: vec!["Welcome to Rusty Roguelike".to_string()] });
+    gs.ecs.insert(particle::ParticleBuilder::new());
 
     rltk::main_loop(context, gs)
 }
@@ -66,6 +68,7 @@ fn register_components(gs: &mut State) {
     gs.ecs.register::<MeleePowerBonus>();
     gs.ecs.register::<Monster>();
     gs.ecs.register::<Name>();
+    gs.ecs.register::<ParticleLifetime>();
     gs.ecs.register::<Player>();
     gs.ecs.register::<Position>();
     gs.ecs.register::<ProvidesHealing>();
