@@ -3,10 +3,12 @@ use crate::components::{Confusion, Monster, Position, Viewshed, WantsToMelee};
 use crate::map::Map;
 use crate::state::RunState;
 use rltk::{Point};
+use crate::systems::particle::ParticleBuilder;
 
 pub struct MonsterAI {}
 
 impl<'a> System<'a> for MonsterAI {
+    #[allow(clippy::type_complexity)]
     type SystemData = (
         WriteExpect<'a, Map>,
         ReadExpect<'a, Point>,
@@ -18,21 +20,12 @@ impl<'a> System<'a> for MonsterAI {
         WriteStorage<'a, Position>,
         WriteStorage<'a, WantsToMelee>,
         WriteStorage<'a, Confusion>,
+        WriteExpect<'a, ParticleBuilder>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (
-            mut map,
-            player_pos,
-            player_entity,
-            run_state,
-            entities,
-            mut viewshed,
-            monster,
-            mut position,
-            mut wants_to_melee,
-            mut confused
-        ) = data;
+        let (mut map, player_pos, player_entity, run_state, entities, mut viewshed,
+            monster, mut position, mut wants_to_melee, mut confused, mut particle_builder) = data;
 
         if *run_state != RunState::MonsterTurn { return; }
 
@@ -46,6 +39,11 @@ impl<'a> System<'a> for MonsterAI {
                     confused.remove(entity);
                 }
                 can_act = false;
+
+                particle_builder.request(
+                    pos.x, pos.y, rltk::RGB::named(rltk::MAGENTA),
+                    rltk::RGB::named(rltk::BLACK), rltk::to_cp437('?'), 200.0,
+                );
             }
 
             if can_act {

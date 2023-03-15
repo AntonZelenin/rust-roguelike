@@ -1,8 +1,7 @@
 use std::collections::HashMap;
-use crate::state::State;
 use crate::map::Map;
 use crate::components::*;
-use rltk::{Point, RandomNumberGenerator, RGB};
+use rltk::{RandomNumberGenerator, RGB};
 use specs::Entity;
 use specs::prelude::*;
 use crate::rect::Rect;
